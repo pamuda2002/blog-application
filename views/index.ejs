@@ -1,0 +1,50 @@
+<!--
+This is the main page that displays a list of all blog posts.
+It includes the header and footer partials.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Blog</title>
+    <link rel="stylesheet" href="/style/styles.css">
+</head>
+<body>
+    <!-- Include the header partial -->
+    <%- include('partials/header.ejs') %>
+
+    <div class="content-wrap">
+        <div class="container">
+            <h1>My Blog</h1>
+            <!-- Link to create a new post -->
+            <a href="/new">Create New Post</a>
+            
+            <div class="posts">
+                <!-- Check if there are any posts -->
+                <% if (postsList.length === 0) { %>
+                    <p>No posts yet. Create your first post!</p>
+                <% } else { %>
+                    <!-- Loop through each post and display it -->
+                    <% postsList.forEach(post => { %>
+                        <article class="post">
+                            <h2><%= post.title %></h2>
+                            <p class="meta">By <%= post.author %> on <%= post.date.toLocaleDateString() %></p>
+                            <!-- Display a snippet of the post content -->
+                            <p><%= post.content.substring(0, 200) %>...<a href="/posts/<%= post.id %>">Read More</a></p>
+                            <!-- Link to edit the post -->
+                            <a href="/posts/edit/<%= post.id %>">Edit</a>
+                            <!-- Form to delete the post -->
+                            <form class="btnclz" action="/posts/delete/<%= post.id %>" method="POST" style="display: inline;">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </article>
+                    <% }) %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the footer partial -->
+    <%- include('partials/footer.ejs') %>
+</body>
+</html>
+
