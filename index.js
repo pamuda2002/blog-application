@@ -1,6 +1,5 @@
 // Import necessary modules
 import express from "express";
-import bodyParser from "body-parser";
 
 // Create an Express application
 const app = express();
@@ -10,8 +9,11 @@ const port = 3000;
 let posts = [];
 let postIdCounter = 1;
 
+import bodyParser from "body-parser";
+
 // Middleware setup
 app.use(express.static("public")); // Serve static files from the "public" directory
+app.use(bodyParser.json()); // Parse JSON bodies
 app.use(bodyParser.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.set("view engine", "ejs"); // Set EJS as the view engine
 
@@ -37,11 +39,20 @@ app.get("/contact", (req, res) => {
 
 // Route to handle new post submissions
 app.post("/posts", (req, res) => {
+  const { postTitle, postContent, author } = req.body;
+  if (!postTitle || !postContent) {
+    return res.render("new.ejs", {
+      error: "Title and content are required.",
+      title: postTitle,
+      content: postContent,
+      author: author
+    });
+  }
   const newPost = {
     id: postIdCounter++,
-    title: req.body.postTitle,
-    content: req.body.postContent,
-    author: req.body.author,
+    title: postTitle,
+    content: postContent,
+    author: author,
     date: new Date()
   };
   posts.push(newPost);
@@ -70,12 +81,26 @@ app.get("/posts/edit/:id", (req, res) => {
 
 // Route to handle post updates
 app.post('/posts/update/:id', (req, res) => {
-  const postIndex = posts.findIndex(p => p.id === parseInt(req.params.id));
-  if (postIndex !== -1) {
-    posts[postIndex].title = req.body.postTitle;
-    posts[postIndex].content = req.body.postContent;
-    posts[postIndex].author = req.body.author;
+  const postId = parseInt(req.params.id);
+  const { postTitle, postContent, author } = req.body;
+  const postIndex = posts.findIndex(p => p.id === postId);
+
+  if (postIndex === -1) {
+    return res.redirect('/');
   }
+
+  if (!postTitle || !postContent) {
+    const post = { id: postId, title: postTitle, content: postContent, author: author };
+    return res.render('edit.ejs', {
+      error: "Title and content are required.",
+      post: post
+    });
+  }
+
+  posts[postIndex].title = postTitle;
+  posts[postIndex].content = postContent;
+  posts[postIndex].author = author;
+  posts[postIndex].date = new Date();
   res.redirect('/');
 });
 
@@ -89,7 +114,11 @@ app.get("/posts/:id", (req, res) => {
   }
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Listening on port:${port}`);
-});
+// Start the server if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Listening on port:${port}`);
+  });
+}
+
+export { app, posts };
